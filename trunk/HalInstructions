@@ -1,0 +1,10 @@
+           sleep
+           
+bad2
+bad3 instr
+bad4 instr 4     
+read lobj  
+write lobj 10  
+four tokens are here
+read hobj
+write hobj 999999
