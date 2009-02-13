@@ -1,27 +1,41 @@
-running w/ input file HalInstructions (15152 HalInstructions
- bytes)
-moved 121224 bits in 1.41930184 seconds.
-bits/second = 85411.00742883558
-moved 121224 bits in 1.433047931 seconds.
-bits/second = 84591.72744864736
-moved 121224 bits in 1.298616077 seconds.
-bits/second = 93348.6056017771
+Group Members: 
+- Khoi Dang
+- Chris Cunningham
 
-running w/ input file shakes.txt (33488 shakes.txt
- bytes)
-moved 267912 bits in 2.716834084 seconds.
-bits/second = 98611.83705614907
-moved 267912 bits in 3.01925203 seconds.
-bits/second = 88734.55986382163
-moved 267912 bits in 2.750798635 seconds.
-bits/second = 97394.26092161049
+Run Command: java ConcSecureSystem filename
 
-running w/ input file tabTest (97603 tabTest
- bytes)
-moved 780832 bits in 7.445318991 seconds.
-bits/second = 104875.56019344236
-moved 780832 bits in 7.478819434 seconds.
-bits/second = 104405.78314408868
-moved 780832 bits in 7.984874765 seconds.
-bits/second = 97788.8849832199
+The following traces are from 9 runs of the program, 3 
+for each file. These runs were used to compute an average
+bits/seconds of 40501!
+
+Processor Info:
+2.4 GHz Pentium 4
+1 GHz Memory
+
+Machine Type:
+UTCS Linux Machine: Dell Precision 360, hostname: loadstone
+
+running w/ input file HalInstructions (15152 bytes)
+moved 121224 bits in 3.012433103 seconds.
+bits/second = 40241.22556589766
+moved 121224 bits in 3.059094313 seconds.
+bits/second = 39627.415044002926
+moved 121224 bits in 3.026795961 seconds.
+bits/second = 40050.27149565434
+
+running w/ input file shakes.txt (33488 bytes)
+moved 267912 bits in 6.580940236 seconds.
+bits/second = 40710.29220633694
+moved 267912 bits in 6.756235438 seconds.
+bits/second = 39654.0355140892
+moved 267912 bits in 6.576146266 seconds.
+bits/second = 40739.96975784419
+
+running w/ input file tabTest (97603 bytes)
+moved 780832 bits in 18.901786272 seconds.
+bits/second = 41309.958157588466
+moved 780832 bits in 18.879199867 seconds.
+bits/second = 41359.37992609843
+moved 780832 bits in 19.127244122 seconds.
+bits/second = 40823.02683123563
 
