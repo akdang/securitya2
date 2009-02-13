@@ -1,0 +1,27 @@
+running w/ input file HalInstructions (15152 HalInstructions
+ bytes)
+moved 121224 bits in 1.41930184 seconds.
+bits/second = 85411.00742883558
+moved 121224 bits in 1.433047931 seconds.
+bits/second = 84591.72744864736
+moved 121224 bits in 1.298616077 seconds.
+bits/second = 93348.6056017771
+
+running w/ input file shakes.txt (33488 shakes.txt
+ bytes)
+moved 267912 bits in 2.716834084 seconds.
+bits/second = 98611.83705614907
+moved 267912 bits in 3.01925203 seconds.
+bits/second = 88734.55986382163
+moved 267912 bits in 2.750798635 seconds.
+bits/second = 97394.26092161049
+
+running w/ input file tabTest (97603 tabTest
+ bytes)
+moved 780832 bits in 7.445318991 seconds.
+bits/second = 104875.56019344236
+moved 780832 bits in 7.478819434 seconds.
+bits/second = 104405.78314408868
+moved 780832 bits in 7.984874765 seconds.
+bits/second = 97788.8849832199
+

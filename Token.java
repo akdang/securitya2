@@ -1,3 +1,8 @@
+/**
+ * CS361 Computer Security - Assignment 2
+ * Authored by Khoi Dang and Chris Cunningham
+ */
+
 import java.util.*;
 import java.io.*;
 
