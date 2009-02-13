@@ -1,8 +1,7 @@
 /**
- * CS361 Computer Security - Assignment 1
+ * CS361 Computer Security - Assignment 2
  * Authored by Khoi Dang and Chris Cunningham
  */
-
 
 import java.util.*;
 import java.io.*;
@@ -63,16 +62,16 @@ public class ConcSecureSystem
     		
 			ReferenceMonitor rm = new ReferenceMonitor();
 			
-			SecureSubject hal = new SecureSubject("Hal", SecurityLevel.HIGH, rm, (tmp+Character.toString('\000')).getBytes());
+			byte[] fileByteArray = (tmp+Character.toString('\000')).getBytes();
+			
+			SecureSubject hal = new SecureSubject("Hal", SecurityLevel.HIGH, rm, fileByteArray);
 			rm.addSubjectLevel("hal", SecurityLevel.HIGH);
 			
 			SecureSubject lyle = new SecureSubject("Lyle", SecurityLevel.LOW, rm);
 			rm.addSubjectLevel("lyle", SecurityLevel.LOW);
 		
-		    
 			hal.start();
 			lyle.start();
-		
     	}
     }
 }
@@ -388,63 +387,15 @@ class SecureSubject extends Thread
     private ReferenceMonitor referenceMonitor;
     private ArrayList<Instruction> instructions;
     private int bitCount;
+    private long startTime, stopTime;
     private boolean[] bits;
-
-    /**
-     * Constructor. Reads in file to determine subject instructions
-     * @param name subject name
-     * @param s subject security level
-     * @param fileName name of file containing instructions
-     * @param r reference monitor controlling subject access to objects
-     */
-    public SecureSubject(String name, SecurityLevel s, String fileName, ReferenceMonitor r) 
-    {
-    	System.out.println("Called old SecureSubject constructor. Broken!");
-        /*this.name = name;
-        securityLevel = s;
-        referenceMonitor = r;
-        instructions = new ArrayList<Instruction>();
-
-        Scanner in = null;
-	    try 
-        {
-	        in = new Scanner(new File(fileName));
-	        in.useDelimiter("\n");
-
-	        while (in.hasNext()) 
-            {
-	            String nextInstruction = in.next().toLowerCase().trim();	//ignoring case and edge white space
-	            
-	            StringTokenizer nextInstructionTokens = new StringTokenizer(nextInstruction, " ", false);	//single instruction into parts
-	            ArrayList<String> tokensToBeParsed = new ArrayList<String>();
-	            
-	            while(nextInstructionTokens.hasMoreTokens())	//populating ArrayList with tokens
-                {
-	            	String nextToken = nextInstructionTokens.nextToken();
-	            	tokensToBeParsed.add(nextToken);
-	            }
-	            instructions.add(Instruction.parseInstruction(tokensToBeParsed));	//parsing instruction, adding to list of subject instructions
-	        }
-	    } 
-        catch (FileNotFoundException e) 
-        {
-			System.err.println("File " + fileName + " not found! Exiting.");
-            System.exit(1);
-		}
-        finally 
-        {
-            if(in!=null)
-    	        in.close();
-	    }*/
-    }
-    
+    public static final double NANOS_PER_SEC = 1000000000.0;
 
     
     /**
-     * Constructor. Reads in file to determine subject instructions
+     * Lyles Constructor.
      * @param name subject name
      * @param s subject security level
-     * @param fileName name of file containing instructions
      * @param r reference monitor controlling subject access to objects
      */
     public SecureSubject(String name, SecurityLevel s, ReferenceMonitor r) 
@@ -458,11 +409,11 @@ class SecureSubject extends Thread
     }
     
     /**
-     * Constructor. Reads in file to determine subject instructions
+     * Hals constructor.
      * @param name subject name
      * @param s subject security level
-     * @param fileName name of file containing instructions
      * @param r reference monitor controlling subject access to objects
+     * @param arr contains chars in file represented as bytes
      */
     public SecureSubject(String name, SecurityLevel s, ReferenceMonitor r, byte[] arr) 
     {
@@ -473,11 +424,11 @@ class SecureSubject extends Thread
         ByteArrayInputStream inputStream = new ByteArrayInputStream(arr);
         bitCount = 0;
         
-        bits = new boolean[8*arr.length];
+        bits = new boolean[8*arr.length];	//bits holds the bits from byte array
         int temp = 0;
         int count = 0;
         
-        while((temp = inputStream.read()) != -1) 
+        while((temp = inputStream.read()) != -1)//masking and shifting to get bits
         {
         	for(int i = 0; i < 8; i++, count++) 
         	{
@@ -517,7 +468,7 @@ class SecureSubject extends Thread
 	 */
 	public synchronized void run()
     {
-        //System.out.println(name + " starting up.");
+		System.nanoTime();
 
         if(name.equalsIgnoreCase("hal"))
         	halAction();
@@ -527,6 +478,7 @@ class SecureSubject extends Thread
 	
 	public void halAction()
 	{
+		startTime = System.nanoTime();
 		for(int i = 0; i<bits.length; i++) 
 		{
 			if(Token.hasToken("hal"))
@@ -538,6 +490,12 @@ class SecureSubject extends Thread
 				Token.passToken();
 			}
 		}
+
+		stopTime = System.nanoTime();
+		double numSeconds = (stopTime - startTime)/NANOS_PER_SEC;
+		
+		System.out.println("moved " + bits.length + " bits in " + numSeconds + " seconds.");
+		System.out.println("bits/second = " + bits.length/numSeconds);
 	}
 	
 	public void lyleAction()
@@ -548,6 +506,7 @@ class SecureSubject extends Thread
 		{
 			if(Token.hasToken("lyle"))
 			{
+				//used covert channel described in spec
 				referenceMonitor.executeInstruction("lyle", new Instruction(Command.CREATE, "obj", 0));
 				referenceMonitor.executeInstruction("lyle", new Instruction(Command.WRITE, "obj", 1));
 				int value = referenceMonitor.executeInstruction("lyle", new Instruction(Command.READ, "obj", 0));
@@ -570,6 +529,8 @@ class SecureSubject extends Thread
 			}
 		}
 		
+		
+		//printing out to file		
 		FileOutputStream out = null;
 		try
 		{
@@ -587,13 +548,9 @@ class SecureSubject extends Thread
 				try {
 					out.close();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-		}
-		
-		
-		
+		}		
 	}
 }
 
@@ -648,48 +605,5 @@ class Instruction
 	public int getValue() 
     {
 		return value;
-	}
-	
-	/**
-	 * Method that determines validity of instruction, and then creates
-	 * an appropriate Instruction object based on the command given.
-	 * 
-	 * @param tokensToBeParsed ArrayList of instruction tokens from file
-	 * @return new Instruction object
-	 */
-	public static Instruction parseInstruction(ArrayList<String> tokensToBeParsed) 
-    {
-		System.out.println("Called to parseInstruction. parseInstruction() is broken!");
-		return null;
-		/*
-		int size = tokensToBeParsed.size();		// validity determined by number of tokens
-		
-        if(size == 1 && tokensToBeParsed.get(0).equals(SLEEP))		//SLEEP can have only 1 token
-        {
-            return new Instruction(Command.SLEEP, "" ,  -1);
-        }
-		else if(size == 2 && tokensToBeParsed.get(0).equals(READ))  //READ can have only 2 tokens
-        {
-            if(tokensToBeParsed.get(1).equals(LOBJ) || tokensToBeParsed.get(1).equals(HOBJ))
-                return new Instruction(Command.READ, tokensToBeParsed.get(1),  -1);
-		}
-		else if(size == 3 && tokensToBeParsed.get(0).equals(WRITE))	//WRITE can have only 3 tokens
-        {
-            if(tokensToBeParsed.get(1).equals(LOBJ) || tokensToBeParsed.get(1).equals(HOBJ))
-            {
-                try
-                {
-                    int value = Integer.parseInt(tokensToBeParsed.get(2));
-                    return new Instruction(Command.WRITE, tokensToBeParsed.get(1),  value);
-                }
-                catch (NumberFormatException e)
-                {
-                    return new Instruction(Command.BADINSTRUCTION, "", -1);
-                }
-            }
-		}
-        return new Instruction(Command.BADINSTRUCTION, "", -1);  //Any other amount of tokens is a bad instruction.
-        */
-    }
-    
+	}    
 }
