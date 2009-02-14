@@ -9,12 +9,14 @@ import java.io.*;
 enum SecurityLevel {LOW, HIGH}
 
 enum Command {WRITE, READ, SLEEP, CREATE, DESTROY, BADINSTRUCTION}
-
+ 
 /**
  * Class implements Bell-LaPadula model.
  */
 public class ConcSecureSystem 
 {
+	public static boolean verbose = false;
+	
 	/**
 	 * Entry point for program execution.
 	 * @param args
@@ -26,6 +28,10 @@ public class ConcSecureSystem
     		System.out.println("Give file name.");
     	else
     	{
+    		if(args.length==2 && args[1].equalsIgnoreCase("v")) //give verbose output
+    			verbose = true;
+    		
+    		
     		String tmp = "";
     		FileInputStream in = null;
     		try 
@@ -67,7 +73,8 @@ public class ConcSecureSystem
 			SecureSubject hal = new SecureSubject("Hal", SecurityLevel.HIGH, rm, fileByteArray);
 			rm.addSubjectLevel("hal", SecurityLevel.HIGH);
 			
-			SecureSubject lyle = new SecureSubject("Lyle", SecurityLevel.LOW, rm);
+			String outputFile = args[0] + ".out";
+			SecureSubject lyle = new SecureSubject("Lyle", SecurityLevel.LOW, rm, outputFile);
 			rm.addSubjectLevel("lyle", SecurityLevel.LOW);
 		
 			hal.start();
@@ -390,6 +397,7 @@ class SecureSubject extends Thread
     private long startTime, stopTime;
     private boolean[] bits;
     public static final double NANOS_PER_SEC = 1000000000.0;
+    private static String outputFile = "output.txt";
 
     
     /**
@@ -398,7 +406,7 @@ class SecureSubject extends Thread
      * @param s subject security level
      * @param r reference monitor controlling subject access to objects
      */
-    public SecureSubject(String name, SecurityLevel s, ReferenceMonitor r) 
+    public SecureSubject(String name, SecurityLevel s, ReferenceMonitor r, String outFile) 
     {
         this.name = name;
         securityLevel = s;
@@ -406,6 +414,7 @@ class SecureSubject extends Thread
         instructions = new ArrayList<Instruction>();
         bits = null;
         bitCount = 0;
+        outputFile = outFile;
     }
     
     /**
@@ -481,12 +490,20 @@ class SecureSubject extends Thread
 		startTime = System.nanoTime();
 		for(int i = 0; i<bits.length; i++) 
 		{
+			String verbosePrint = "";
 			if(Token.hasToken("hal"))
 			{
 				if(!bits[i])
 				{
+					verbosePrint += "Hal - creates object obj (signals 0)";
 					referenceMonitor.executeInstruction("hal", new Instruction(Command.CREATE, "obj", 0));
 				}
+				else					
+					verbosePrint += "Hal - does nothing (signals 1)";
+				
+				if(ConcSecureSystem.verbose)
+					System.out.println(verbosePrint);
+				
 				Token.passToken();
 			}
 		}
@@ -494,8 +511,8 @@ class SecureSubject extends Thread
 		stopTime = System.nanoTime();
 		double numSeconds = (stopTime - startTime)/NANOS_PER_SEC;
 		
-		System.out.println("moved " + bits.length + " bits in " + numSeconds + " seconds.");
-		System.out.println("bits/second = " + bits.length/numSeconds);
+		System.out.println("Moved " + bits.length + " bits in " + numSeconds + " seconds.");
+		System.out.println("Bandwidth = " + bits.length/numSeconds + " bits/second");
 	}
 	
 	public void lyleAction()
@@ -504,14 +521,25 @@ class SecureSubject extends Thread
 		ArrayList<Character> chars = new ArrayList<Character>();
 		while(true)
 		{
+			String verbosePrint = "";
 			if(Token.hasToken("lyle"))
 			{
 				//used covert channel described in spec
 				referenceMonitor.executeInstruction("lyle", new Instruction(Command.CREATE, "obj", 0));
+				verbosePrint += "Lyle - created object obj\n";
 				referenceMonitor.executeInstruction("lyle", new Instruction(Command.WRITE, "obj", 1));
+				verbosePrint += "Lyle - wrote '1' to obj\n";
 				int value = referenceMonitor.executeInstruction("lyle", new Instruction(Command.READ, "obj", 0));
+				if(value == 1)
+					verbosePrint += "Lyle - read '1' from obj obj (received signal 1)\n";
+				else
+					verbosePrint += "Lyle - read '0' from obj obj (received signal 0)\n";
 				referenceMonitor.executeInstruction("lyle", new Instruction(Command.DESTROY, "obj", 0));
-
+				verbosePrint += "Lyle - destroyed obj\n";
+				
+				if(ConcSecureSystem.verbose)
+					System.out.println(verbosePrint);
+				
 				myByte <<= 1;
 				myByte |= value;
 				bitCount++;
@@ -534,7 +562,7 @@ class SecureSubject extends Thread
 		FileOutputStream out = null;
 		try
 		{
-			out = new FileOutputStream("output.txt");
+			out = new FileOutputStream(outputFile);
 			for(int i = 0; i<chars.size()-1; i++)
 				out.write(chars.get(i));
 		}
